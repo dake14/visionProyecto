@@ -1,0 +1,11 @@
+opencv-python>=4.9
+mediapipe>=0.10.14
+customtkinter>=5.2
+pillow>=10.0
+numpy>=1.26
+pyserial>=3.5
+tensorflow>=2.16
+tensorflow-datasets>=4.9
+importlib_resources>=6.0
+matplotlib>=3.8
+scikit-learn>=1.4

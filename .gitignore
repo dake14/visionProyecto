@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+modelos/*.keras
+modelos/*.task
+modelos/*.json
+resultados/
