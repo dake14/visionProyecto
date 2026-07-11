@@ -11,11 +11,13 @@ from PIL import Image
 from vision_proyecto.config import (
     ALTO_CAMARA,
     ANCHO_CAMARA,
+    CONFIANZA_MINIMA_CNN,
     POSTURAS_GESTO,
 )
 from vision_proyecto.core.dibujo import dibujar_esqueleto, dibujar_hud
 from vision_proyecto.core.flexion import (
     SuavizadorFlexiones,
+    bounding_box_normalizado,
     calcular_flexiones,
     clasificar_gesto,
 )
@@ -67,6 +69,8 @@ class AppManoRobotica(ctk.CTk):
         self._indice_camara = indice_camara
         self._detener = threading.Event()
         self._clasificador_cnn = None
+        self._postura_cnn = None
+        self._texto_cnn = "—"
 
         self._construir_ui()
         self._hilo_video = threading.Thread(target=self._bucle_video, daemon=True)
@@ -123,6 +127,8 @@ class AppManoRobotica(ctk.CTk):
                 self._selector_modo.set(self._modo)
                 return
         self._modo = modo
+        self._postura_cnn = None
+        self._texto_cnn = "—"
         self._panel_flexiones.activar_modo_manual(modo == MODO_MANUAL)
         self._mensaje.configure(text="")
 
@@ -217,6 +223,7 @@ class AppManoRobotica(ctk.CTk):
             gesto = "—"
             manos = 0
             fuente = "MediaPipe"
+            landmarks = None
 
             if resultado and resultado.hand_landmarks:
                 manos = len(resultado.hand_landmarks)
@@ -233,11 +240,15 @@ class AppManoRobotica(ctk.CTk):
                 fuente = "CNN propia"
                 contador_frames += 1
                 if contador_frames % FRAMES_ENTRE_PREDICCIONES_CNN == 0:
-                    gesto_cnn, confianza = self._clasificador_cnn.predecir(frame_rgb)
-                    gesto = f"{gesto_cnn} ({confianza:.0%})"
-                    flexiones = suavizador.actualizar(POSTURAS_GESTO[gesto_cnn])
-                else:
-                    flexiones = None
+                    bbox = bounding_box_normalizado(landmarks) if landmarks else None
+                    gesto_cnn, confianza = self._clasificador_cnn.predecir(frame_rgb, bbox)
+                    if confianza >= CONFIANZA_MINIMA_CNN:
+                        self._postura_cnn = POSTURAS_GESTO[gesto_cnn]
+                        self._texto_cnn = f"{gesto_cnn} ({confianza:.0%})"
+                    else:
+                        self._texto_cnn = f"~{gesto_cnn} ({confianza:.0%})"
+                gesto = self._texto_cnn
+                flexiones = self._postura_cnn
 
             dibujar_hud(frame, fps_actual, gesto, self._modo)
 

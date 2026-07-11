@@ -50,6 +50,9 @@ CONFIANZA_TRACKING = 0.5
 TAM_IMAGEN_CNN = 128
 CLASES_GESTOS = ["piedra", "papel", "tijera"]
 
+CONFIANZA_MINIMA_CNN = 0.85
+MARGEN_RECORTE_MANO = 0.25
+
 POSTURAS_GESTO = {
     "piedra": [1.0, 1.0, 1.0, 1.0, 1.0],
     "papel":  [0.0, 0.0, 0.0, 0.0, 0.0],

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 
-from vision_proyecto.config import ORDEN_DEDOS
+from vision_proyecto.config import MARGEN_RECORTE_MANO, ORDEN_DEDOS
 
 
 # ─────────────────────────────  Config  ──────────────────────────────
@@ -48,6 +48,22 @@ def _flexion_dedo(landmarks, dedo: str) -> float:
 
 def calcular_flexiones(landmarks) -> list[float]:
     return [_flexion_dedo(landmarks, dedo) for dedo in ORDEN_DEDOS]
+
+
+def bounding_box_normalizado(landmarks, margen: float = MARGEN_RECORTE_MANO) -> tuple:
+    xs = [lm.x for lm in landmarks]
+    ys = [lm.y for lm in landmarks]
+    x0, x1 = min(xs), max(xs)
+    y0, y1 = min(ys), max(ys)
+    centro_x = (x0 + x1) / 2
+    centro_y = (y0 + y1) / 2
+    medio_lado = max(x1 - x0, y1 - y0) / 2 * (1 + margen)
+    return (
+        max(0.0, centro_x - medio_lado),
+        max(0.0, centro_y - medio_lado),
+        min(1.0, centro_x + medio_lado),
+        min(1.0, centro_y + medio_lado),
+    )
 
 
 def clasificar_gesto(flexiones: list[float]) -> str:
