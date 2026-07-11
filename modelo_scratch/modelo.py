@@ -15,16 +15,24 @@ from vision_proyecto.config import CLASES_GESTOS, TAM_IMAGEN_CNN
 # ────────────────────────────  Dispositivo  ───────────────────────────
 def configurar_dispositivo() -> str:
     gpus = tf.config.list_physical_devices("GPU")
+
     if gpus:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)
         tf.keras.mixed_precision.set_global_policy("mixed_float16")
         nombres = ", ".join(gpu.name for gpu in gpus)
-        print(f"[GPU] Entrenando en GPU con precisión mixta: {nombres}")
-        return "GPU"
-    print("[CPU] No se detectó GPU disponible para TensorFlow. Entrenando en CPU.")
-    print("[CPU] En Windows nativo TF>=2.11 no usa CUDA: para la RTX 3080 usa WSL2 "
-          "(pip install 'tensorflow[and-cuda]').")
+
+        if "directml" in str(gpus[0]).lower():
+            print(f"[DirectML] GPU disponible con precisión mixta: {nombres}")
+            return "DirectML"
+        else:
+            print(f"[GPU/CUDA] Entrenando con precisión mixta: {nombres}")
+            return "GPU"
+
+    print("[CPU] No se detectó GPU (DirectML o CUDA). Entrenando en CPU.")
+    print("[Windows nativo] Para usar RTX 3080 con TF>=2.11:")
+    print("  1. DirectML (recomendado): pip install tensorflow-directml")
+    print("  2. WSL2: pip install 'tensorflow[and-cuda]'")
     return "CPU"
 
 

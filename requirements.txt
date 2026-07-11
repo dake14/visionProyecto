@@ -9,3 +9,7 @@ tensorflow-datasets>=4.9
 importlib_resources>=6.0
 matplotlib>=3.8
 scikit-learn>=1.4
+
+# Para GPU en Windows sin WSL2, descomenta una de estas:
+# tensorflow-directml  # Windows nativo con DirectML (RTX 3080, AMD, Intel)
+# tensorflow[and-cuda]  # WSL2 con CUDA 12

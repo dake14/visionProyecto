@@ -87,22 +87,38 @@ python modelo_scratch/comparar.py --muestras 200
 detección tanto del pipeline MediaPipe+reglas como de la CNN, y guarda tabla,
 JSON y gráfica en `resultados/`.
 
-## GPU (RTX 3080)
+## GPU (RTX 3080 y otras)
 
-El código detecta la GPU automáticamente (`tf.config.list_physical_devices`) y, si
-existe, activa *memory growth* y precisión mixta (`mixed_float16`, ideal para los
-Tensor Cores de la RTX 3080). Si no hay GPU, entrena en CPU sin cambios.
+El código detecta la GPU automáticamente y activa *memory growth* + precisión mixta
+(`mixed_float16`, ideal para Tensor Cores).
 
-Importante en Windows: TensorFlow ≥ 2.11 ya no soporta CUDA en Windows nativo,
-así que en esta instalación (Python 3.12 + Windows) entrena en CPU. Para
-aprovechar la RTX 3080 hay dos opciones:
+### Windows nativo (sin WSL2)
 
-1. **WSL2 (recomendado)**: dentro de Ubuntu/WSL2 con drivers NVIDIA actuales:
-   ```bash
-   python3 -m venv .venv && source .venv/bin/activate
-   pip install "tensorflow[and-cuda]" tensorflow-datasets matplotlib scikit-learn
-   python modelo_scratch/entrenar.py
-   ```
-2. **Linux nativo**: mismo comando que en WSL2.
+**DirectML** (recomendado): abstracción de Microsoft para GPU en Windows.
 
-En cualquier otra laptop sin GPU el mismo código corre en CPU sin tocar nada.
+```powershell
+pip install tensorflow-directml
+python modelo_scratch/entrenar.py
+```
+
+Funciona con RTX 3080, AMD Radeon, Intel Arc. ~2–3× más rápido que CPU.
+
+### Windows con WSL2
+
+```bash
+pip install "tensorflow[and-cuda]"
+python modelo_scratch/entrenar.py
+```
+
+Requiere drivers NVIDIA + CUDA Toolkit. Algo más configuración, pero máximo rendimiento.
+
+### Linux nativo
+
+```bash
+pip install "tensorflow[and-cuda]"
+python modelo_scratch/entrenar.py
+```
+
+### Laptop sin GPU
+
+El mismo código corre en CPU sin cambios (más lento, pero funcional).
