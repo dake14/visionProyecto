@@ -89,28 +89,37 @@ JSON y gráfica en `resultados/`.
 
 ## GPU (RTX 3080 y otras)
 
-El código detecta la GPU automáticamente y activa *memory growth* + precisión mixta
-(`mixed_float16`, ideal para Tensor Cores).
+El código detecta GPU automáticamente si está disponible (memory growth + precisión mixta).
 
-### Windows nativo (sin WSL2)
+### Windows nativo: Google Colab (Recomendado)
 
-**DirectML** (recomendado): abstracción de Microsoft para GPU en Windows.
+Usa GPU gratis sin instalar nada localmente:
 
-```powershell
-pip install tensorflow-directml
-python modelo_scratch/entrenar.py
+1. Ve a [colab.research.google.com](https://colab.research.google.com)
+2. Nueva notebook
+3. Copia y corre:
+
+```python
+!git clone https://github.com/dake14/visionProyecto.git
+%cd visionProyecto
+!pip install -q tensorflow tensorflow-datasets matplotlib scikit-learn
+
+import sys
+sys.path.insert(0, '.')
+from modelo_scratch.entrenar import entrenar
+entrenar(epocas=15, tam_lote=32)
 ```
 
-Funciona con RTX 3080, AMD Radeon, Intel Arc. ~2–3× más rápido que CPU.
+Entrena ~50 seg/época con K80/T4/L4 gratis.
 
-### Windows con WSL2
+### WSL2 + CUDA (Máximo rendimiento local)
 
 ```bash
 pip install "tensorflow[and-cuda]"
 python modelo_scratch/entrenar.py
 ```
 
-Requiere drivers NVIDIA + CUDA Toolkit. Algo más configuración, pero máximo rendimiento.
+Requiere drivers NVIDIA + CUDA Toolkit (~30 min setup). RTX 3080 ~ 30–40 seg/época.
 
 ### Linux nativo
 
@@ -119,6 +128,10 @@ pip install "tensorflow[and-cuda]"
 python modelo_scratch/entrenar.py
 ```
 
-### Laptop sin GPU
+### Windows nativo sin GPU
 
-El mismo código corre en CPU sin cambios (más lento, pero funcional).
+```powershell
+python modelo_scratch/entrenar.py
+```
+
+Entrena en CPU (~75 seg/época), funcional pero lento. Para acelerar, usa Colab o WSL2.

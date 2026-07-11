@@ -21,18 +21,13 @@ def configurar_dispositivo() -> str:
             tf.config.experimental.set_memory_growth(gpu, True)
         tf.keras.mixed_precision.set_global_policy("mixed_float16")
         nombres = ", ".join(gpu.name for gpu in gpus)
+        print(f"[GPU/CUDA] Entrenando con precisión mixta: {nombres}")
+        return "GPU"
 
-        if "directml" in str(gpus[0]).lower():
-            print(f"[DirectML] GPU disponible con precisión mixta: {nombres}")
-            return "DirectML"
-        else:
-            print(f"[GPU/CUDA] Entrenando con precisión mixta: {nombres}")
-            return "GPU"
-
-    print("[CPU] No se detectó GPU (DirectML o CUDA). Entrenando en CPU.")
-    print("[Windows nativo] Para usar RTX 3080 con TF>=2.11:")
-    print("  1. DirectML (recomendado): pip install tensorflow-directml")
-    print("  2. WSL2: pip install 'tensorflow[and-cuda]'")
+    print("[CPU] No se detectó GPU. Entrenando en CPU (~75 seg/época).")
+    print("[Para acelerar:]")
+    print("  • Google Colab: free GPU K80/T4 (~50 seg/época)")
+    print("  • WSL2: pip install 'tensorflow[and-cuda]' (~40 seg/época con RTX 3080)")
     return "CPU"
 
 
