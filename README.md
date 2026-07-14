@@ -106,6 +106,11 @@ Descarga manual (no está en TFDS): baja `FreiHAND_pub_v2.zip` y descomprímelo 
 python modelo_scratch/entrenar_regresion.py --epocas 25 --lote 32
 ```
 
+**GPU en un clic (Colab):** abre
+[`notebooks/entrenar_regresion_colab.ipynb`](https://colab.research.google.com/github/dake14/visionProyecto/blob/master/notebooks/entrenar_regresion_colab.ipynb)
+→ `Entorno de ejecución` → GPU → `Ejecutar todo`. El notebook clona el repo,
+descarga FreiHAND, entrena en GPU y te descarga `cnn_regresion_dedos.keras`.
+
 Arquitectura: mismos 4 bloques convolucionales, pero la última capa es
 `Dense(5, sigmoid)` (regresión) en vez de `Dense(3, softmax)` (clasificación).
 Pérdida MSE, métrica MAE por dedo. El modelo entrenado se guarda en
