@@ -31,7 +31,8 @@ from vision_proyecto.utils import asegurar_modelo_landmarker
 # ─────────────────────────────  Config  ──────────────────────────────
 MODO_MANUAL = "Manual"
 MODO_VISION = "Visión"
-MODO_CNN = "CNN propia"
+MODO_CNN = "CNN gestos"
+MODO_ANGULOS = "CNN ángulos"
 
 TAM_VIDEO = (860, 484)
 INTERVALO_UI_MS = 30
@@ -71,6 +72,8 @@ class AppManoRobotica(ctk.CTk):
         self._clasificador_cnn = None
         self._postura_cnn = None
         self._texto_cnn = "—"
+        self._predictor_angulos = None
+        self._angulos_cnn = None
 
         self._construir_ui()
         self._hilo_video = threading.Thread(target=self._bucle_video, daemon=True)
@@ -99,7 +102,7 @@ class AppManoRobotica(ctk.CTk):
 
         self._selector_modo = ctk.CTkSegmentedButton(
             columna,
-            values=[MODO_MANUAL, MODO_VISION, MODO_CNN],
+            values=[MODO_MANUAL, MODO_VISION, MODO_CNN, MODO_ANGULOS],
             command=self._cambiar_modo,
         )
         self._selector_modo.set(MODO_VISION)
@@ -126,9 +129,14 @@ class AppManoRobotica(ctk.CTk):
             if not self._cargar_cnn():
                 self._selector_modo.set(self._modo)
                 return
+        if modo == MODO_ANGULOS and self._predictor_angulos is None:
+            if not self._cargar_regresion():
+                self._selector_modo.set(self._modo)
+                return
         self._modo = modo
         self._postura_cnn = None
         self._texto_cnn = "—"
+        self._angulos_cnn = None
         self._panel_flexiones.activar_modo_manual(modo == MODO_MANUAL)
         self._mensaje.configure(text="")
 
@@ -147,6 +155,27 @@ class AppManoRobotica(ctk.CTk):
             self._clasificador_cnn = ClasificadorGestosCNN()
         except Exception as error:
             self._mensaje.configure(text=f"Error al cargar CNN: {error}",
+                                    text_color=theme.ERROR)
+            return False
+        self._mensaje.configure(text="")
+        return True
+
+    def _cargar_regresion(self) -> bool:
+        from vision_proyecto.core.inferencia_cnn import PredictorAngulosCNN
+
+        if not PredictorAngulosCNN.disponible():
+            self._mensaje.configure(
+                text="No existe modelos/cnn_regresion_dedos.keras. "
+                     "Entrena primero: python modelo_scratch/entrenar_regresion.py",
+                text_color=theme.ERROR)
+            return False
+        self._mensaje.configure(text="Cargando modelo de regresión...",
+                                text_color=theme.TEXTO_TENUE)
+        self.update_idletasks()
+        try:
+            self._predictor_angulos = PredictorAngulosCNN()
+        except Exception as error:
+            self._mensaje.configure(text=f"Error al cargar regresión: {error}",
                                     text_color=theme.ERROR)
             return False
         self._mensaje.configure(text="")
@@ -186,6 +215,7 @@ class AppManoRobotica(ctk.CTk):
         ruta_modelo = asegurar_modelo_landmarker()
         rastreador = RastreadorManos(ruta_modelo)
         suavizador = SuavizadorFlexiones()
+        suavizador_angulos = SuavizadorFlexiones(alfa=0.4)
 
         captura, indice = self._abrir_camara()
         while captura is None and not self._detener.is_set():
@@ -237,7 +267,7 @@ class AppManoRobotica(ctk.CTk):
                 gesto = clasificar_gesto(flexiones)
 
             if self._modo == MODO_CNN and self._clasificador_cnn is not None:
-                fuente = "CNN propia"
+                fuente = "CNN gestos"
                 contador_frames += 1
                 if contador_frames % FRAMES_ENTRE_PREDICCIONES_CNN == 0:
                     bbox = bounding_box_normalizado(landmarks) if landmarks else None
@@ -249,6 +279,16 @@ class AppManoRobotica(ctk.CTk):
                         self._texto_cnn = f"~{gesto_cnn} ({confianza:.0%})"
                 gesto = self._texto_cnn
                 flexiones = self._postura_cnn
+
+            elif self._modo == MODO_ANGULOS and self._predictor_angulos is not None:
+                fuente = "CNN ángulos"
+                contador_frames += 1
+                if contador_frames % FRAMES_ENTRE_PREDICCIONES_CNN == 0:
+                    bbox = bounding_box_normalizado(landmarks) if landmarks else None
+                    angulos = self._predictor_angulos.predecir(frame_rgb, bbox)
+                    self._angulos_cnn = suavizador_angulos.actualizar(angulos)
+                gesto = "regresión 5D"
+                flexiones = self._angulos_cnn
 
             dibujar_hud(frame, fps_actual, gesto, self._modo)
 
