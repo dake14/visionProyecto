@@ -50,6 +50,18 @@ def calcular_flexiones(landmarks) -> list[float]:
     return [_flexion_dedo(landmarks, dedo) for dedo in ORDEN_DEDOS]
 
 
+class _PuntoSimple:
+    __slots__ = ("x", "y", "z")
+
+    def __init__(self, fila):
+        self.x, self.y, self.z = float(fila[0]), float(fila[1]), float(fila[2])
+
+
+def calcular_flexiones_np(puntos_xyz) -> list[float]:
+    landmarks = [_PuntoSimple(fila) for fila in puntos_xyz]
+    return calcular_flexiones(landmarks)
+
+
 def bounding_box_normalizado(landmarks, margen: float = MARGEN_RECORTE_MANO) -> tuple:
     xs = [lm.x for lm in landmarks]
     ys = [lm.y for lm in landmarks]

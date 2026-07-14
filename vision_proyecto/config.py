@@ -18,6 +18,10 @@ URL_LANDMARKER = (
 RUTA_CNN = DIR_MODELOS / "cnn_gestos.keras"
 RUTA_HISTORIAL_CNN = DIR_MODELOS / "cnn_historial.json"
 
+DIR_FREIHAND = RAIZ_PROYECTO / "datasets" / "FreiHAND_pub_v2"
+RUTA_CNN_REGRESION = DIR_MODELOS / "cnn_regresion_dedos.keras"
+RUTA_HISTORIAL_REGRESION = DIR_MODELOS / "cnn_regresion_historial.json"
+
 
 # ─────────────────────  Servos de la mano (ESP32)  ────────────────────
 ORDEN_DEDOS = ["pulgar", "indice", "corazon", "anular", "menique"]

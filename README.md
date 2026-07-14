@@ -87,6 +87,31 @@ python modelo_scratch/comparar.py --muestras 200
 detección tanto del pipeline MediaPipe+reglas como de la CNN, y guarda tabla,
 JSON y gráfica en `resultados/`.
 
+## Modelo de regresión: 5 ángulos por dedo (FreiHAND)
+
+A diferencia del clasificador (1 de 3 gestos), esta CNN produce **la flexión
+continua 0–1 de cada dedo** directamente — igual que MediaPipe, pero aprendida
+desde cero.
+
+Dataset: [FreiHAND](https://lmb.informatik.uni-freiburg.de/resources/datasets/FreihandDataset.en.html)
+(~130k imágenes con 21 keypoints 3D). Las etiquetas de flexión se generan
+automáticamente pasando los keypoints por `calcular_flexiones_np` — la misma
+matemática de ángulos que usa MediaPipe en vivo, así que la salida es
+directamente compatible con el protocolo serial de la mano.
+
+Descarga manual (no está en TFDS): baja `FreiHAND_pub_v2.zip` y descomprímelo en
+`datasets/FreiHAND_pub_v2/` (debe quedar `training_xyz.json` y `training/rgb/*.jpg`).
+
+```powershell
+python modelo_scratch/entrenar_regresion.py --epocas 25 --lote 32
+```
+
+Arquitectura: mismos 4 bloques convolucionales, pero la última capa es
+`Dense(5, sigmoid)` (regresión) en vez de `Dense(3, softmax)` (clasificación).
+Pérdida MSE, métrica MAE por dedo. El modelo entrenado se guarda en
+`modelos/cnn_regresion_dedos.keras` y `PredictorAngulosCNN` lo usa para inferencia
+en vivo devolviendo las 5 flexiones listas para enviar a la ESP32.
+
 ## GPU (RTX 3080 y otras)
 
 El código detecta GPU automáticamente si está disponible (memory growth + precisión mixta).

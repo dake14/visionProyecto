@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-from vision_proyecto.config import CLASES_GESTOS, TAM_IMAGEN_CNN
+from vision_proyecto.config import CLASES_GESTOS, ORDEN_DEDOS, TAM_IMAGEN_CNN
 
 
 # ────────────────────────────  Dispositivo  ───────────────────────────
@@ -58,5 +58,25 @@ def construir_cnn() -> tf.keras.Model:
         optimizer=tf.keras.optimizers.Adam(1e-3),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
+    )
+    return modelo
+
+
+def construir_cnn_regresion() -> tf.keras.Model:
+    entradas = layers.Input(shape=(TAM_IMAGEN_CNN, TAM_IMAGEN_CNN, 3))
+    x = entradas
+    for filtros in (32, 64, 128, 256):
+        x = _bloque_conv(x, filtros)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dropout(0.35)(x)
+    x = layers.Dense(128, activation="relu")(x)
+    x = layers.Dropout(0.25)(x)
+    salidas = layers.Dense(len(ORDEN_DEDOS), activation="sigmoid",
+                           dtype="float32")(x)
+    modelo = models.Model(entradas, salidas, name="cnn_regresion_dedos")
+    modelo.compile(
+        optimizer=tf.keras.optimizers.Adam(1e-3),
+        loss="mse",
+        metrics=["mae"],
     )
     return modelo
